@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Générateur d'Alpaga</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f0e9e9; margin: 20px; padding: 0; }
+    .container { max-width: 900px; margin: 40px auto; background: #a890bb; border-radius: 12px; box-shadow: 0 2px 8px #0002; padding: 32px; display: flex; gap: 32px; flex-direction: row-reverse; }
+    .custom-panel { flex: 1; }
+    .alpaca-preview { flex: 1; display: flex; flex-direction: column; align-items: center; }
+    .alpaca-canvas { width: 320px; height: 320px; background: #e0e0e0; border-radius: 16px; margin-bottom: 16px; position: relative; }
+    .controls { margin-top: 16px; display: flex; gap: 12px; }
+    label { display: block; margin: 12px 0 4px; }
+    select { width: 100%; padding: 4px; }
+    button { padding: 8px 16px; border: none; border-radius: 6px; background: #4caf50; color: #fff; cursor: pointer; font-size: 1rem; }
+    button:hover { background: #388e3c; }
+  </style>
+ </head>
+ <body>
+  <div class="container">
+    <div class="custom-panel">
+      <h2>Personnalisez votre Alpaga</h2>
+      <form id="customForm">
+        <label for="background">Fond</label>
+        <select id="background" name="background"></select>
+                <label for="ears">Oreilles</label>
+                <select id="ears" name="ears"></select>
+                <label for="eyes">Yeux</label>
+                <select id="eyes" name="eyes"></select>
+                <label for="hair">Cheveux</label>
+                <select id="hair" name="hair"></select>
+                <label for="mouth">Bouche</label>
+                <select id="mouth" name="mouth"></select>
+                <label for="neck">Cou</label>
+                <select id="neck" name="neck"></select>
+                <label for="leg">Jambe</label>
+                <select id="leg" name="leg"></select>
+        <label for="accessories">Accessoires</label>
+        <select id="accessories" name="accessories"></select>
+      </form>
+      <div class="controls">
+        <button type="button" id="randomBtn">Randomiser</button>
+        <button type="button" id="downloadBtn">Télécharger</button>
+      </div>
+    </div>
+    <div class="alpaca-preview">
+      <h2>Prévisualisation</h2>
+      <div class="alpaca-canvas" id="alpacaCanvas"></div>
+    </div>
+  </div>
+  <script>
+    // Liste des options pour chaque partie (à compléter dynamiquement si besoin)
+    const options = {
+      background: ["blue50","blue60","blue70","darkblue30","darkblue50","darkblue70","green50","green60","green70","grey40","grey70","grey80","red50","red60","red70","yellow50","yellow60","yellow70"],
+      ears: ["default","tilt-backward","tilt-forward"],
+            eyes: ["angry","default","naughty","panda","smart","star"],
+            hair: ["bang","curls","default","elegant","fancy","quiff","short"],
+            mouth: ["astonished","default","eating","laugh","tongue"],
+            neck: ["bend-backward","bend-forward","default","thick"],
+            leg: ["bubble-tea","cookie","default","game-console","tilt-backward","tilt-forward"],
+            accessories: ["","earings","flower","glasses","headphone"]
+  };
+
+  // Remplir les selecteurs
+    Object.keys(options).forEach(part => {
+      const select = document.getElementById(part);
+      options[part].forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt;
+                option.textContent = opt ? opt.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Aucun';
+        select.appendChild(option);
+      });
+    });
+    // Etat courant
+    let state = {
+      background: options.background[0],
+            ears: options.ears[0],
+            eyes: options.eyes[0],
+            hair: options.hair[0],
+            mouth: options.mouth[0],
+            neck: options.neck[0],
+            leg: options.leg[0],
+      accessories: ""
+    };
+
+    // Mettre à jour l'alpaga
+    function updateAlpaca() {
+      const canvas = document.getElementById('alpacaCanvas');
+      canvas.innerHTML = '';
+      // Ordre d'affichage des images
+      const layers = [
+        { part: 'background', path: `image/alpaca/backgrounds/${state.background}.png` },
+                { part: 'neck', path: `image/alpaca/neck/${state.neck}.png` },
+                { part: 'leg', path: `image/alpaca/leg/${state.leg}.png` },
+                { part: 'hair', path: `image/alpaca/hair/${state.hair}.png` },
+                { part: 'ears', path: `image/alpaca/ears/${state.ears}.png` },
+                { part: 'nose', path: `image/alpaca/nose.png` },
+                { part: 'mouth', path: `image/alpaca/mouth/${state.mouth}.png` },
+        { part: 'eyes', path: `image/alpaca/eyes/${state.eyes}.png` },
+      ];
+      if(state.accessories) {
+        layers.push({ part: 'accessories', path: `image/alpaca/accessories/${state.accessories}.png` });
+      }
+      layers.forEach(layer => {
+                const img = document.createElement('img');
+                img.src = layer.path;
+                img.alt = layer.part;
+                img.style.position = 'absolute';
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.left = 0;
+                img.style.top = 0;
+                canvas.appendChild(img);
+      });
+    }
+
+    // Mise à jour lors du changement de sélection
+    document.getElementById('customForm').addEventListener('change', e => {
+      if(e.target.name) {
+        state[e.target.name] = e.target.value;
+        updateAlpaca();
+      }
+    });
+    // Randomisation
+    document.getElementById('randomBtn').addEventListener('click', () => {
+      Object.keys(options).forEach(part => {
+                const opts = options[part];
+                state[part] = opts[Math.floor(Math.random() * opts.length)];
+                document.getElementById(part).value = state[part];
+      });
+      updateAlpaca();
+    });
+    // Téléchargement de l'image générée
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      const canvas = document.createElement('canvas');
+            canvas.width = 320;
+            canvas.height = 320;
+            const ctx = canvas.getContext('2d');
+      const layers = [
+        { part: 'background', path: `image/alpaca/backgrounds/${state.background}.png` },
+        { part: 'neck', path: `image/alpaca/neck/${state.neck}.png` },
+                { part: 'leg', path: `image/alpaca/leg/${state.leg}.png` },
+                { part: 'hair', path: `image/alpaca/hair/${state.hair}.png` },
+                { part: 'ears', path: `image/alpaca/ears/${state.ears}.png` },
+                { part: 'nose', path: `image/alpaca/nose.png` },
+                { part: 'mouth', path: `image/alpaca/mouth/${state.mouth}.png` },
+                { part: 'eyes', path: `image/alpaca/eyes/${state.eyes}.png` },
+      ];
+      if(state.accessories) {
+        layers.push({ part: 'accessories', path: `image/alpaca/accessories/${state.accessories}.png` });
+            }
+            let loaded = 0;
+            layers.forEach(layer => {
+                const img = new window.Image();
+                img.src = layer.path;
+                img.onload = () => {
+          loaded++;
+          if(loaded === layers.length) {
+            // Redessiner dans l'ordre
+            layers.forEach(l => {
+              const i = new window.Image();
+              i.src = l.path;
+              ctx.drawImage(i, 0, 0, 320, 320);
+            });
+            setTimeout(() => {
+              const link = document.createElement('a');
+                            link.download = 'alpaga.png';
+                            link.href = canvas.toDataURL();
+                            link.click();
+            }, 200);
+          }
+        }
+      });
+    });
+
+    // Initialisation
+    updateAlpaca();
+  </script>
+ </body>
+ </html>
